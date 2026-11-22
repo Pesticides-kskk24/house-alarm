@@ -1,0 +1,38 @@
+YAML
+name: Update Public Housing Web
+
+on:
+  schedule:
+    # 매일 한국시간 오전 9시 30분, 오후 2시 30분, 오후 6시 30분 자동 업데이트
+    - cron: '30 0,5,9 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-web:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Generate index.html
+        env:
+          DATA_API_KEY: ${{ secrets.DATA_API_KEY }}
+        run: python main.py
+
+      - name: Commit and push HTML
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add index.html
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update dashboard" && git push)
